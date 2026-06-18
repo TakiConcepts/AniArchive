@@ -36,8 +36,19 @@ export async function lookupRadarrMovie(baseUrl: string, apiKey: string, tmdbId:
 }
 
 export async function searchRadarrByTitle(baseUrl: string, apiKey: string, title: string) {
-  const results = await radarrFetch(baseUrl, apiKey, `/movie/lookup?term=${encodeURIComponent(title)}`);
-  return results[0] || null;
+  try {
+    const results = await radarrFetch(baseUrl, apiKey, `/movie/lookup?term=${encodeURIComponent(title)}`);
+    if (!Array.isArray(results) || results.length === 0) return null;
+    const lower = title.toLowerCase();
+    const exact = results.find(
+      (r: { title?: string; alternateTitles?: { title: string }[] }) =>
+        r.title?.toLowerCase() === lower ||
+        r.alternateTitles?.some((a) => a.title.toLowerCase() === lower)
+    );
+    return exact || results[0];
+  } catch {
+    return null;
+  }
 }
 
 export async function addRadarrMovie(
@@ -53,16 +64,24 @@ export async function addRadarrMovie(
     year?: number;
   }
 ) {
-  return radarrFetch(baseUrl, apiKey, "/movie", {
-    method: "POST",
-    body: JSON.stringify({
-      ...movie,
-      monitored: true,
-      addOptions: {
-        searchForMovie: true,
-      },
-    }),
-  });
+  try {
+    return await radarrFetch(baseUrl, apiKey, "/movie", {
+      method: "POST",
+      body: JSON.stringify({
+        ...movie,
+        monitored: true,
+        addOptions: {
+          searchForMovie: true,
+        },
+      }),
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg.includes("already been added") || msg.includes("already exists")) {
+      return { id: 0, alreadyExists: true };
+    }
+    throw err;
+  }
 }
 
 export async function getRadarrExistingMovies(baseUrl: string, apiKey: string) {

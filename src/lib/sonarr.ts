@@ -31,13 +31,29 @@ export async function getSonarrRootFolders(baseUrl: string, apiKey: string): Pro
 }
 
 export async function lookupSonarrSeries(baseUrl: string, apiKey: string, tvdbId: number) {
-  const results = await sonarrFetch(baseUrl, apiKey, `/series/lookup?term=tvdb:${tvdbId}`);
-  return results[0] || null;
+  try {
+    const results = await sonarrFetch(baseUrl, apiKey, `/series/lookup?term=tvdb:${tvdbId}`);
+    if (!Array.isArray(results)) return null;
+    return results[0] || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function searchSonarrByTitle(baseUrl: string, apiKey: string, title: string) {
-  const results = await sonarrFetch(baseUrl, apiKey, `/series/lookup?term=${encodeURIComponent(title)}`);
-  return results[0] || null;
+  try {
+    const results = await sonarrFetch(baseUrl, apiKey, `/series/lookup?term=${encodeURIComponent(title)}`);
+    if (!Array.isArray(results) || results.length === 0) return null;
+    const lower = title.toLowerCase();
+    const exact = results.find(
+      (r: { title?: string; alternateTitles?: { title: string }[] }) =>
+        r.title?.toLowerCase() === lower ||
+        r.alternateTitles?.some((a) => a.title.toLowerCase() === lower)
+    );
+    return exact || results[0];
+  } catch {
+    return null;
+  }
 }
 
 export async function addSonarrSeries(
@@ -53,16 +69,24 @@ export async function addSonarrSeries(
     seasons?: unknown[];
   }
 ) {
-  return sonarrFetch(baseUrl, apiKey, "/series", {
-    method: "POST",
-    body: JSON.stringify({
-      ...series,
-      monitored: true,
-      addOptions: {
-        searchForMissingEpisodes: true,
-      },
-    }),
-  });
+  try {
+    return await sonarrFetch(baseUrl, apiKey, "/series", {
+      method: "POST",
+      body: JSON.stringify({
+        ...series,
+        monitored: true,
+        addOptions: {
+          searchForMissingEpisodes: true,
+        },
+      }),
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg.includes("already been added") || msg.includes("already exists")) {
+      return { id: 0, alreadyExists: true };
+    }
+    throw err;
+  }
 }
 
 export async function getSonarrExistingSeries(baseUrl: string, apiKey: string) {
