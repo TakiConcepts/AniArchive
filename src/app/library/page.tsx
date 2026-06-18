@@ -157,9 +157,9 @@ export default function LibraryPage() {
                       <span className="text-xs">{STATUS_LABELS[title.anilistStatus] || title.anilistStatus}</span>
                     </td>
                     <td>
-                      {title.userScore || title.averageScore ? (
+                      {title.userScore ? (
                         <span className="text-sm font-mono">
-                          {(title.userScore || title.averageScore)!.toFixed(1)}
+                          {title.userScore.toFixed(1)}
                         </span>
                       ) : (
                         <span className="text-xs text-muted">no rating</span>
@@ -230,7 +230,7 @@ function PosterCard({
   };
 }) {
   const displayTitle = title.titleEnglish || title.title;
-  const score = title.userScore || title.averageScore;
+  const score = title.userScore;
 
   return (
     <a
