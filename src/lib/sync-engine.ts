@@ -103,6 +103,9 @@ export async function runSync(): Promise<SyncResult> {
   const radarrRoot = await getSetting(SETTING_KEYS.RADARR_ROOT_FOLDER);
   const sonarrProfileId = await getSetting(SETTING_KEYS.SONARR_QUALITY_PROFILE);
   const radarrProfileId = await getSetting(SETTING_KEYS.RADARR_QUALITY_PROFILE);
+  const sonarrProfileHighId = await getSetting(SETTING_KEYS.SONARR_QUALITY_PROFILE_HIGH);
+  const radarrProfileHighId = await getSetting(SETTING_KEYS.RADARR_QUALITY_PROFILE_HIGH);
+  const qualityThreshold = parseFloat((await getSetting(SETTING_KEYS.QUALITY_SCORE_THRESHOLD)) || "0");
 
   const jellyfinUrl = await getSetting(SETTING_KEYS.JELLYFIN_URL);
   const jellyfinKey = await getSetting(SETTING_KEYS.JELLYFIN_API_KEY);
@@ -156,6 +159,8 @@ export async function runSync(): Promise<SyncResult> {
   for (const syncedTitle of pendingTitles) {
     const title = syncedTitle.titleEnglish || syncedTitle.title;
     const isMovie = syncedTitle.format === "MOVIE";
+    const titleScore = syncedTitle.userScore || syncedTitle.averageScore || 0;
+    const isHighScore = qualityThreshold > 0 && titleScore >= qualityThreshold;
 
     if (jellyfinData) {
       const inJellyfin =
@@ -203,10 +208,11 @@ export async function runSync(): Promise<SyncResult> {
           continue;
         }
 
+        const radarrProfile = (isHighScore && radarrProfileHighId) ? radarrProfileHighId : radarrProfileId!;
         const added = await addRadarrMovie(radarrUrl!, radarrKey!, {
           title: movieData.title,
           tmdbId: movieData.tmdbId,
-          qualityProfileId: parseInt(radarrProfileId!),
+          qualityProfileId: parseInt(radarrProfile),
           rootFolderPath: radarrRoot!,
           titleSlug: movieData.titleSlug,
           images: movieData.images,
@@ -261,10 +267,11 @@ export async function runSync(): Promise<SyncResult> {
           continue;
         }
 
+        const sonarrProfile = (isHighScore && sonarrProfileHighId) ? sonarrProfileHighId : sonarrProfileId!;
         const added = await addSonarrSeries(sonarrUrl!, sonarrKey!, {
           title: seriesData.title,
           tvdbId: seriesData.tvdbId,
-          qualityProfileId: parseInt(sonarrProfileId!),
+          qualityProfileId: parseInt(sonarrProfile),
           rootFolderPath: sonarrRoot!,
           titleSlug: seriesData.titleSlug,
           images: seriesData.images,

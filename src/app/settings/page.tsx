@@ -421,7 +421,7 @@ export default function SettingsPage() {
 
         {/* Quality */}
         <Section title="Quality">
-          <Row label="Default Profile" hint="Maps to your Sonarr/Radarr quality profiles">
+          <Row label="Default Quality" hint="Quality preference for standard titles">
             <div className="flex gap-2">
               {[
                 { value: "bluray", label: "Blu-ray" },
@@ -441,6 +441,56 @@ export default function SettingsPage() {
               ))}
             </div>
           </Row>
+
+          <Row label="Score Threshold" hint="Titles at or above this score use the high-quality profile. Set 0 to disable.">
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="0.5"
+                value={form.quality_score_threshold || "0"}
+                onChange={(e) => updateField("quality_score_threshold", e.target.value)}
+                className="w-48 accent-primary"
+              />
+              <span className="text-sm font-mono font-bold text-primary min-w-[2rem] text-right">
+                {form.quality_score_threshold || "0"}
+              </span>
+            </div>
+          </Row>
+
+          {parseFloat(form.quality_score_threshold || "0") > 0 && (
+            <>
+              {sonarrProfiles.length > 0 && (
+                <Row label="Sonarr High-Score Profile" hint="Quality profile for highly-rated series">
+                  <select
+                    value={form.sonarr_quality_profile_high_id || ""}
+                    onChange={(e) => updateField("sonarr_quality_profile_high_id", e.target.value)}
+                    className="w-72"
+                  >
+                    <option value="">Same as default</option>
+                    {sonarrProfiles.map((p) => (
+                      <option key={p.id} value={p.id.toString()}>{p.name}</option>
+                    ))}
+                  </select>
+                </Row>
+              )}
+              {radarrProfiles.length > 0 && (
+                <Row label="Radarr High-Score Profile" hint="Quality profile for highly-rated movies">
+                  <select
+                    value={form.radarr_quality_profile_high_id || ""}
+                    onChange={(e) => updateField("radarr_quality_profile_high_id", e.target.value)}
+                    className="w-72"
+                  >
+                    <option value="">Same as default</option>
+                    {radarrProfiles.map((p) => (
+                      <option key={p.id} value={p.id.toString()}>{p.name}</option>
+                    ))}
+                  </select>
+                </Row>
+              )}
+            </>
+          )}
         </Section>
 
         {/* Deals */}
