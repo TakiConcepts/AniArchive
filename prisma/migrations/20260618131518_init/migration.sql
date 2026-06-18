@@ -24,6 +24,7 @@ CREATE TABLE "SyncedTitle" (
     "syncStatus" TEXT NOT NULL DEFAULT 'PENDING',
     "qualityProfile" TEXT,
     "failReason" TEXT,
+    "inJellyfin" BOOLEAN NOT NULL DEFAULT false,
     "syncedAt" DATETIME,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
