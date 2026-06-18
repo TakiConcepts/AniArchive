@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AniArchive - AniList to Jellyfin",
-  description: "Auto-sync your AniList to Sonarr, Radarr, and Jellyfin",
+  title: "AniArchive",
+  description: "AniList to Sonarr/Radarr/Jellyfin sync",
 };
 
 export default function RootLayout({
@@ -30,7 +30,7 @@ export default function RootLayout({
     >
       <body className="min-h-full">
         <NavSidebar />
-        <main className="ml-64 min-h-screen p-8">{children}</main>
+        <main className="pt-[60px] min-h-screen">{children}</main>
       </body>
     </html>
   );

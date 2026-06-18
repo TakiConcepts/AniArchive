@@ -9,7 +9,9 @@ import {
   AlertTriangle,
   Activity,
   Disc3,
+  ArrowRight,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function Dashboard() {
   const { syncStatus, isLoading, mutate } = useSyncStatus();
@@ -36,110 +38,124 @@ export default function Dashboard() {
     : "Never";
 
   return (
-    <div className="max-w-6xl">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted text-sm mt-1">
-            Overview of your AniList to Jellyfin pipeline
-          </p>
-        </div>
+    <div>
+      {/* Page toolbar */}
+      <div className="bg-surface border-b border-border px-6 py-3 flex items-center justify-between">
+        <h1 className="text-base font-semibold text-foreground-bright">Dashboard</h1>
         <button
           onClick={handleSync}
           disabled={syncing}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-1.5 bg-primary hover:bg-primary-hover text-white rounded text-[13px] font-medium transition-colors disabled:opacity-50"
         >
-          <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
           {syncing ? "Syncing..." : "Sync Now"}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard
-          label="Synced"
-          value={syncStatus?.totalSynced ?? 0}
-          icon={<CheckCircle2 className="w-5 h-5 text-success" />}
-          color="text-success"
-        />
-        <StatCard
-          label="Pending"
-          value={syncStatus?.totalPending ?? 0}
-          icon={<Clock className="w-5 h-5 text-warning" />}
-          color="text-warning"
-        />
-        <StatCard
-          label="Failed"
-          value={syncStatus?.totalFailed ?? 0}
-          icon={<AlertTriangle className="w-5 h-5 text-danger" />}
-          color="text-danger"
-        />
-        <StatCard
-          label="Last Sync"
-          value={lastSyncFormatted}
-          icon={<Activity className="w-5 h-5 text-primary" />}
-          color="text-primary"
-          isText
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-surface rounded-xl border border-border p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-primary" />
-            Recent Activity
-          </h2>
-          {isLoading ? (
-            <p className="text-muted text-sm">Loading...</p>
-          ) : !syncStatus?.recentLogs?.length ? (
-            <p className="text-muted text-sm">
-              No activity yet. Configure your settings and run a sync.
-            </p>
-          ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {syncStatus.recentLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-start gap-3 p-3 rounded-lg bg-surface-light"
-                >
-                  <div
-                    className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                      log.status === "SUCCESS"
-                        ? "bg-success"
-                        : log.status === "FAILED"
-                        ? "bg-danger"
-                        : "bg-warning"
-                    }`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-muted uppercase">
-                        {log.action.replace(/_/g, " ")}
-                      </span>
-                      {log.title && (
-                        <span className="text-sm font-medium truncate">
-                          {log.title}
-                        </span>
-                      )}
-                    </div>
-                    {log.details && (
-                      <p className="text-xs text-muted mt-0.5">{log.details}</p>
-                    )}
-                    <p className="text-xs text-muted mt-0.5">
-                      {new Date(log.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+      <div className="p-6">
+        {/* Stats row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard
+            label="Synced"
+            value={syncStatus?.totalSynced ?? 0}
+            icon={<CheckCircle2 className="w-8 h-8" />}
+            color="text-success"
+            iconBg="bg-success/10"
+          />
+          <StatCard
+            label="Pending"
+            value={syncStatus?.totalPending ?? 0}
+            icon={<Clock className="w-8 h-8" />}
+            color="text-warning"
+            iconBg="bg-warning/10"
+          />
+          <StatCard
+            label="Failed"
+            value={syncStatus?.totalFailed ?? 0}
+            icon={<AlertTriangle className="w-8 h-8" />}
+            color="text-danger"
+            iconBg="bg-danger/10"
+          />
+          <div className="bg-surface rounded border border-border p-4">
+            <div className="text-xs text-muted uppercase tracking-wider mb-1">Last Sync</div>
+            <div className="text-sm font-medium text-foreground-bright">{lastSyncFormatted}</div>
+          </div>
         </div>
 
-        <div className="bg-surface rounded-xl border border-border p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Disc3 className="w-5 h-5 text-secondary" />
-            Deal Alerts
-          </h2>
-          <DealAlerts />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Activity log */}
+          <div className="lg:col-span-2">
+            <div className="bg-surface rounded border border-border">
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-foreground-bright flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-primary" />
+                  Recent Activity
+                </h2>
+                <Link href="/activity" className="text-xs text-primary hover:text-primary-hover flex items-center gap-1">
+                  View All <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+
+              {isLoading ? (
+                <div className="p-4 text-muted text-sm">Loading...</div>
+              ) : !syncStatus?.recentLogs?.length ? (
+                <div className="p-6 text-center text-muted text-sm">
+                  No activity yet. Configure your settings and run a sync.
+                </div>
+              ) : (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Action</th>
+                      <th>Title</th>
+                      <th>Status</th>
+                      <th>Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {syncStatus.recentLogs.slice(0, 10).map((log) => (
+                      <tr key={log.id}>
+                        <td>
+                          <span className="text-xs font-medium text-muted">
+                            {log.action.replace(/_/g, " ")}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="text-sm text-foreground-bright">
+                            {log.title || "—"}
+                          </span>
+                        </td>
+                        <td>
+                          <StatusBadge status={log.status} />
+                        </td>
+                        <td>
+                          <span className="text-xs text-muted">
+                            {new Date(log.createdAt).toLocaleTimeString()}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          {/* Deals sidebar */}
+          <div>
+            <div className="bg-surface rounded border border-border">
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-foreground-bright flex items-center gap-2">
+                  <Disc3 className="w-4 h-4 text-radarr" />
+                  Deal Alerts
+                </h2>
+                <Link href="/deals" className="text-xs text-primary hover:text-primary-hover flex items-center gap-1">
+                  View All <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+              <DealAlerts />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -151,24 +167,37 @@ function StatCard({
   value,
   icon,
   color,
-  isText,
+  iconBg,
 }: {
   label: string;
-  value: number | string;
+  value: number;
   icon: React.ReactNode;
   color: string;
-  isText?: boolean;
+  iconBg: string;
 }) {
   return (
-    <div className="bg-surface rounded-xl border border-border p-5">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-muted">{label}</span>
+    <div className="bg-surface rounded border border-border p-4 flex items-center gap-4">
+      <div className={`p-2 rounded ${iconBg} ${color}`}>
         {icon}
       </div>
-      <p className={`${isText ? "text-sm" : "text-2xl"} font-bold ${color}`}>
-        {value}
-      </p>
+      <div>
+        <div className="text-2xl font-bold text-foreground-bright">{value}</div>
+        <div className="text-xs text-muted uppercase tracking-wider">{label}</div>
+      </div>
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    SUCCESS: "bg-success/15 text-success border-success/30",
+    FAILED: "bg-danger/15 text-danger border-danger/30",
+    SKIPPED: "bg-warning/15 text-warning border-warning/30",
+  };
+  return (
+    <span className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded border ${styles[status] || "bg-muted/15 text-muted border-muted/30"}`}>
+      {status}
+    </span>
   );
 }
 
@@ -193,11 +222,11 @@ function DealAlerts() {
 
   if (!deals.length && !loading) {
     return (
-      <div>
+      <div className="p-4">
         <p className="text-muted text-sm mb-3">No deals loaded yet.</p>
         <button
           onClick={loadDeals}
-          className="text-sm text-primary hover:text-primary-hover font-medium"
+          className="text-xs text-primary hover:text-primary-hover font-medium"
         >
           Load deals
         </button>
@@ -205,29 +234,19 @@ function DealAlerts() {
     );
   }
 
-  if (loading) return <p className="text-muted text-sm">Loading deals...</p>;
+  if (loading) return <div className="p-4 text-muted text-sm">Loading deals...</div>;
 
   return (
-    <div className="space-y-3">
+    <div className="divide-y divide-border">
       {deals.map((deal) => (
-        <div key={deal.id} className="p-3 rounded-lg bg-surface-light">
-          <p className="text-sm font-medium truncate">{deal.title}</p>
+        <div key={deal.id} className="px-4 py-3 hover:bg-surface-light transition-colors">
+          <p className="text-sm text-foreground-bright truncate">{deal.title}</p>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+            <span className="text-[11px] font-medium px-1.5 py-0.5 rounded bg-info/15 text-info border border-info/30 capitalize">
               {deal.source}
             </span>
-            <span className="text-xs text-muted">{deal.condition}</span>
+            <span className="text-[11px] text-muted">{deal.condition}</span>
           </div>
-          {deal.url && (
-            <a
-              href={deal.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-secondary hover:underline mt-1 inline-block"
-            >
-              View listing
-            </a>
-          )}
         </div>
       ))}
     </div>

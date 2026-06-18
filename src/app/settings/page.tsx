@@ -3,9 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import {
-  Settings as SettingsIcon,
   Save,
-  TestTube,
   CheckCircle2,
   XCircle,
   Loader2,
@@ -82,10 +80,7 @@ export default function SettingsPage() {
       const res = await fetch("/api/sonarr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: form.sonarr_url,
-          apiKey: form.sonarr_api_key,
-        }),
+        body: JSON.stringify({ url: form.sonarr_url, apiKey: form.sonarr_api_key }),
       });
       const data = await res.json();
       if (data.connected) {
@@ -106,10 +101,7 @@ export default function SettingsPage() {
       const res = await fetch("/api/radarr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: form.radarr_url,
-          apiKey: form.radarr_api_key,
-        }),
+        body: JSON.stringify({ url: form.radarr_url, apiKey: form.radarr_api_key }),
       });
       const data = await res.json();
       if (data.connected) {
@@ -126,467 +118,374 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-muted">
-        <Loader2 className="w-5 h-5 animate-spin" />
+      <div className="flex items-center gap-2 text-muted p-6">
+        <Loader2 className="w-4 h-4 animate-spin" />
         Loading settings...
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <SettingsIcon className="w-6 h-6" />
-            Settings
-          </h1>
-          <p className="text-muted text-sm mt-1">
-            Configure your connections and sync preferences
-          </p>
-        </div>
+    <div>
+      {/* Toolbar */}
+      <div className="bg-surface border-b border-border px-6 py-3 flex items-center justify-between">
+        <h1 className="text-base font-semibold text-foreground-bright">Settings</h1>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-1.5 bg-primary hover:bg-primary-hover text-white rounded text-[13px] font-medium transition-colors disabled:opacity-50"
         >
-          {saved ? (
-            <CheckCircle2 className="w-4 h-4" />
-          ) : (
-            <Save className="w-4 h-4" />
-          )}
-          {saved ? "Saved!" : saving ? "Saving..." : "Save All"}
+          {saved ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+          {saved ? "Saved!" : saving ? "Saving..." : "Save"}
         </button>
       </div>
 
-      {/* AniList */}
-      <Section title="AniList Connection">
-        <Field label="AniList Username">
-          <input
-            type="text"
-            value={form.anilist_username || ""}
-            onChange={(e) => updateField("anilist_username", e.target.value)}
-            placeholder="Your AniList username"
-            className="w-full"
-          />
-          <p className="text-xs text-muted mt-1">
-            Your AniList profile must be public for the sync to work.
-          </p>
-        </Field>
-      </Section>
+      <div className="p-6 max-w-4xl">
+        {/* Media Management (AniList) */}
+        <Section title="Media Management">
+          <Row label="AniList Username" hint="Your AniList profile must be public.">
+            <input
+              type="text"
+              value={form.anilist_username || ""}
+              onChange={(e) => updateField("anilist_username", e.target.value)}
+              placeholder="Username"
+              className="w-72"
+            />
+          </Row>
+        </Section>
 
-      {/* Sonarr */}
-      <Section title="Sonarr (TV Shows / Anime Series)">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Sonarr URL">
+        {/* Sonarr */}
+        <Section title="Sonarr" accent="sonarr">
+          <Row label="Host" hint="URL including port">
             <input
               type="text"
               value={form.sonarr_url || ""}
               onChange={(e) => updateField("sonarr_url", e.target.value)}
               placeholder="http://localhost:8989"
-              className="w-full"
+              className="w-72"
             />
-          </Field>
-          <Field label="API Key">
-            <input
-              type="password"
-              value={form.sonarr_api_key || ""}
-              onChange={(e) => updateField("sonarr_api_key", e.target.value)}
-              placeholder="Your Sonarr API key"
-              className="w-full"
-            />
-          </Field>
-        </div>
-
-        <div className="flex items-center gap-3 mt-3">
-          <button
-            onClick={testSonarr}
-            disabled={sonarrTest === "testing"}
-            className="flex items-center gap-2 px-4 py-2 bg-surface-light hover:bg-border text-foreground rounded-lg text-sm transition-colors"
-          >
-            {sonarrTest === "testing" ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <TestTube className="w-4 h-4" />
-            )}
-            Test Connection
-          </button>
-          {sonarrTest === "ok" && (
-            <span className="flex items-center gap-1 text-success text-sm">
-              <CheckCircle2 className="w-4 h-4" /> Connected
-            </span>
-          )}
-          {sonarrTest === "fail" && (
-            <span className="flex items-center gap-1 text-danger text-sm">
-              <XCircle className="w-4 h-4" /> Failed
-            </span>
-          )}
-        </div>
-
-        {(sonarrProfiles.length > 0 || sonarrFolders.length > 0) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <Field label="Quality Profile">
+          </Row>
+          <Row label="API Key">
+            <div className="flex items-center gap-2">
+              <input
+                type="password"
+                value={form.sonarr_api_key || ""}
+                onChange={(e) => updateField("sonarr_api_key", e.target.value)}
+                placeholder="API Key"
+                className="w-72"
+              />
+              <button
+                onClick={testSonarr}
+                disabled={sonarrTest === "testing"}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-light hover:bg-surface-hover border border-border text-foreground rounded text-[13px] transition-colors h-[35px]"
+              >
+                {sonarrTest === "testing" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Test
+              </button>
+              {sonarrTest === "ok" && <CheckCircle2 className="w-4 h-4 text-success" />}
+              {sonarrTest === "fail" && <XCircle className="w-4 h-4 text-danger" />}
+            </div>
+          </Row>
+          {sonarrProfiles.length > 0 && (
+            <Row label="Quality Profile">
               <select
                 value={form.sonarr_quality_profile_id || ""}
-                onChange={(e) =>
-                  updateField("sonarr_quality_profile_id", e.target.value)
-                }
-                className="w-full"
+                onChange={(e) => updateField("sonarr_quality_profile_id", e.target.value)}
+                className="w-72"
               >
                 <option value="">Select profile...</option>
                 {sonarrProfiles.map((p) => (
-                  <option key={p.id} value={p.id.toString()}>
-                    {p.name}
-                  </option>
+                  <option key={p.id} value={p.id.toString()}>{p.name}</option>
                 ))}
               </select>
-            </Field>
-            <Field label="Root Folder">
+            </Row>
+          )}
+          {sonarrFolders.length > 0 && (
+            <Row label="Root Folder">
               <select
                 value={form.sonarr_root_folder || ""}
-                onChange={(e) =>
-                  updateField("sonarr_root_folder", e.target.value)
-                }
-                className="w-full"
+                onChange={(e) => updateField("sonarr_root_folder", e.target.value)}
+                className="w-72"
               >
                 <option value="">Select folder...</option>
                 {sonarrFolders.map((f) => (
-                  <option key={f.path} value={f.path}>
-                    {f.path}
-                  </option>
+                  <option key={f.path} value={f.path}>{f.path}</option>
                 ))}
               </select>
-            </Field>
-          </div>
-        )}
-      </Section>
+            </Row>
+          )}
+        </Section>
 
-      {/* Radarr */}
-      <Section title="Radarr (Movies)">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Radarr URL">
+        {/* Radarr */}
+        <Section title="Radarr" accent="radarr">
+          <Row label="Host" hint="URL including port">
             <input
               type="text"
               value={form.radarr_url || ""}
               onChange={(e) => updateField("radarr_url", e.target.value)}
               placeholder="http://localhost:7878"
-              className="w-full"
+              className="w-72"
             />
-          </Field>
-          <Field label="API Key">
-            <input
-              type="password"
-              value={form.radarr_api_key || ""}
-              onChange={(e) => updateField("radarr_api_key", e.target.value)}
-              placeholder="Your Radarr API key"
-              className="w-full"
-            />
-          </Field>
-        </div>
-
-        <div className="flex items-center gap-3 mt-3">
-          <button
-            onClick={testRadarr}
-            disabled={radarrTest === "testing"}
-            className="flex items-center gap-2 px-4 py-2 bg-surface-light hover:bg-border text-foreground rounded-lg text-sm transition-colors"
-          >
-            {radarrTest === "testing" ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <TestTube className="w-4 h-4" />
-            )}
-            Test Connection
-          </button>
-          {radarrTest === "ok" && (
-            <span className="flex items-center gap-1 text-success text-sm">
-              <CheckCircle2 className="w-4 h-4" /> Connected
-            </span>
-          )}
-          {radarrTest === "fail" && (
-            <span className="flex items-center gap-1 text-danger text-sm">
-              <XCircle className="w-4 h-4" /> Failed
-            </span>
-          )}
-        </div>
-
-        {(radarrProfiles.length > 0 || radarrFolders.length > 0) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <Field label="Quality Profile">
+          </Row>
+          <Row label="API Key">
+            <div className="flex items-center gap-2">
+              <input
+                type="password"
+                value={form.radarr_api_key || ""}
+                onChange={(e) => updateField("radarr_api_key", e.target.value)}
+                placeholder="API Key"
+                className="w-72"
+              />
+              <button
+                onClick={testRadarr}
+                disabled={radarrTest === "testing"}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-light hover:bg-surface-hover border border-border text-foreground rounded text-[13px] transition-colors h-[35px]"
+              >
+                {radarrTest === "testing" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Test
+              </button>
+              {radarrTest === "ok" && <CheckCircle2 className="w-4 h-4 text-success" />}
+              {radarrTest === "fail" && <XCircle className="w-4 h-4 text-danger" />}
+            </div>
+          </Row>
+          {radarrProfiles.length > 0 && (
+            <Row label="Quality Profile">
               <select
                 value={form.radarr_quality_profile_id || ""}
-                onChange={(e) =>
-                  updateField("radarr_quality_profile_id", e.target.value)
-                }
-                className="w-full"
+                onChange={(e) => updateField("radarr_quality_profile_id", e.target.value)}
+                className="w-72"
               >
                 <option value="">Select profile...</option>
                 {radarrProfiles.map((p) => (
-                  <option key={p.id} value={p.id.toString()}>
-                    {p.name}
-                  </option>
+                  <option key={p.id} value={p.id.toString()}>{p.name}</option>
                 ))}
               </select>
-            </Field>
-            <Field label="Root Folder">
+            </Row>
+          )}
+          {radarrFolders.length > 0 && (
+            <Row label="Root Folder">
               <select
                 value={form.radarr_root_folder || ""}
-                onChange={(e) =>
-                  updateField("radarr_root_folder", e.target.value)
-                }
-                className="w-full"
+                onChange={(e) => updateField("radarr_root_folder", e.target.value)}
+                className="w-72"
               >
                 <option value="">Select folder...</option>
                 {radarrFolders.map((f) => (
-                  <option key={f.path} value={f.path}>
-                    {f.path}
-                  </option>
+                  <option key={f.path} value={f.path}>{f.path}</option>
                 ))}
               </select>
-            </Field>
-          </div>
-        )}
-      </Section>
+            </Row>
+          )}
+        </Section>
 
-      {/* Sync Rules */}
-      <Section title="Sync Rules">
-        <Field label="Minimum Rating (0-10)">
-          <div className="flex items-center gap-4">
-            <input
-              type="range"
-              min="0"
-              max="10"
-              step="0.5"
-              value={form.min_rating_threshold || "0"}
-              onChange={(e) =>
-                updateField("min_rating_threshold", e.target.value)
-              }
-              className="flex-1 accent-primary bg-transparent border-none p-0"
-            />
-            <span className="text-sm font-mono font-bold text-primary w-10 text-right">
-              {form.min_rating_threshold || "0"}
-            </span>
-          </div>
-          <p className="text-xs text-muted mt-1">
-            Only sync titles with a score at or above this threshold. Uses user
-            score if available, otherwise the AniList average.
-          </p>
-        </Field>
-
-        <Field label="Sync List Statuses">
-          <div className="flex flex-wrap gap-2">
-            {STATUS_OPTIONS.map((opt) => {
-              const selected = getArrayField("sync_statuses").includes(opt.value);
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => toggleArrayField("sync_statuses", opt.value)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    selected
-                      ? "bg-primary text-white"
-                      : "bg-surface-light text-muted hover:text-foreground"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-        </Field>
-
-        <Field label="Sync Formats">
-          <div className="flex flex-wrap gap-2">
-            {FORMAT_OPTIONS.map((opt) => {
-              const selected = getArrayField("sync_formats").includes(opt.value);
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => toggleArrayField("sync_formats", opt.value)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    selected
-                      ? "bg-primary text-white"
-                      : "bg-surface-light text-muted hover:text-foreground"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-        </Field>
-
-        <Field label="Auto-Sync">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() =>
-                updateField(
-                  "sync_enabled",
-                  form.sync_enabled === "true" ? "false" : "true"
-                )
-              }
-              className={`relative w-12 h-6 rounded-full transition-colors ${
-                form.sync_enabled === "true" ? "bg-primary" : "bg-border"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
-                  form.sync_enabled === "true"
-                    ? "translate-x-6"
-                    : "translate-x-0.5"
-                }`}
+        {/* Sync Rules */}
+        <Section title="Import Lists">
+          <Row label="Minimum Rating" hint="Only sync titles at or above this score (0-10)">
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="0.5"
+                value={form.min_rating_threshold || "0"}
+                onChange={(e) => updateField("min_rating_threshold", e.target.value)}
+                className="w-48 accent-primary"
               />
-            </button>
-            <span className="text-sm">
-              {form.sync_enabled === "true" ? "Enabled" : "Disabled"}
-            </span>
-          </div>
-        </Field>
+              <span className="text-sm font-mono font-bold text-primary min-w-[2rem] text-right">
+                {form.min_rating_threshold || "0"}
+              </span>
+            </div>
+          </Row>
 
-        {form.sync_enabled === "true" && (
-          <Field label="Sync Interval (minutes)">
-            <input
-              type="number"
-              min="5"
-              max="1440"
-              value={form.sync_interval_minutes || "60"}
-              onChange={(e) =>
-                updateField("sync_interval_minutes", e.target.value)
-              }
-              className="w-32"
-            />
-          </Field>
-        )}
-      </Section>
+          <Row label="List Statuses" hint="Which AniList statuses to sync">
+            <div className="flex flex-wrap gap-1.5">
+              {STATUS_OPTIONS.map((opt) => {
+                const selected = getArrayField("sync_statuses").includes(opt.value);
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => toggleArrayField("sync_statuses", opt.value)}
+                    className={`px-3 py-1 rounded text-[13px] font-medium border transition-colors ${
+                      selected
+                        ? "bg-primary/15 text-primary border-primary/40"
+                        : "bg-surface-light text-muted border-border hover:text-foreground"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Row>
 
-      {/* Quality Preferences */}
-      <Section title="Quality Preferences">
-        <Field label="Default Quality">
-          <div className="flex gap-3">
-            {[
-              { value: "bluray", label: "Blu-ray", desc: "Highest quality, larger files" },
-              { value: "streaming", label: "Streaming", desc: "Web-DL quality, smaller files" },
-            ].map((opt) => (
+          <Row label="Formats" hint="Which media formats to include">
+            <div className="flex flex-wrap gap-1.5">
+              {FORMAT_OPTIONS.map((opt) => {
+                const selected = getArrayField("sync_formats").includes(opt.value);
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => toggleArrayField("sync_formats", opt.value)}
+                    className={`px-3 py-1 rounded text-[13px] font-medium border transition-colors ${
+                      selected
+                        ? "bg-primary/15 text-primary border-primary/40"
+                        : "bg-surface-light text-muted border-border hover:text-foreground"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Row>
+
+          <Row label="Auto-Sync">
+            <div className="flex items-center gap-3">
               <button
-                key={opt.value}
-                onClick={() => updateField("quality_default", opt.value)}
-                className={`flex-1 p-4 rounded-xl border-2 transition-colors text-left ${
-                  form.quality_default === opt.value
-                    ? "border-primary bg-primary/10"
-                    : "border-border bg-surface-light hover:border-muted"
+                onClick={() => updateField("sync_enabled", form.sync_enabled === "true" ? "false" : "true")}
+                className={`relative w-10 h-5 rounded-full transition-colors ${
+                  form.sync_enabled === "true" ? "bg-primary" : "bg-border"
                 }`}
               >
-                <p className="font-medium text-sm">{opt.label}</p>
-                <p className="text-xs text-muted mt-1">{opt.desc}</p>
+                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                  form.sync_enabled === "true" ? "translate-x-5" : "translate-x-0.5"
+                }`} />
               </button>
-            ))}
-          </div>
-          <p className="text-xs text-muted mt-2">
-            This maps to your Sonarr/Radarr quality profiles. Make sure you have
-            matching profiles configured in your *arr apps.
-          </p>
-        </Field>
-      </Section>
+              {form.sync_enabled === "true" && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted">every</span>
+                  <input
+                    type="number"
+                    min="5"
+                    max="1440"
+                    value={form.sync_interval_minutes || "60"}
+                    onChange={(e) => updateField("sync_interval_minutes", e.target.value)}
+                    className="w-20"
+                  />
+                  <span className="text-sm text-muted">minutes</span>
+                </div>
+              )}
+            </div>
+          </Row>
+        </Section>
 
-      {/* Blu-ray Deals */}
-      <Section title="Blu-ray Deal Notifications">
-        <Field label="Deal Tracking">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() =>
-                updateField(
-                  "deals_enabled",
-                  form.deals_enabled === "true" ? "false" : "true"
-                )
-              }
-              className={`relative w-12 h-6 rounded-full transition-colors ${
-                form.deals_enabled === "true" ? "bg-primary" : "bg-border"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
-                  form.deals_enabled === "true"
-                    ? "translate-x-6"
-                    : "translate-x-0.5"
+        {/* Quality */}
+        <Section title="Quality">
+          <Row label="Default Profile" hint="Maps to your Sonarr/Radarr quality profiles">
+            <div className="flex gap-2">
+              {[
+                { value: "bluray", label: "Blu-ray" },
+                { value: "streaming", label: "Streaming (Web-DL)" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => updateField("quality_default", opt.value)}
+                  className={`px-4 py-2 rounded text-[13px] font-medium border transition-colors ${
+                    form.quality_default === opt.value
+                      ? "bg-primary/15 text-primary border-primary/40"
+                      : "bg-surface-light text-muted border-border hover:text-foreground"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </Row>
+        </Section>
+
+        {/* Deals */}
+        <Section title="Notifications">
+          <Row label="Blu-ray Deals" hint="Search for cheap physical media for your synced titles">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => updateField("deals_enabled", form.deals_enabled === "true" ? "false" : "true")}
+                className={`relative w-10 h-5 rounded-full transition-colors ${
+                  form.deals_enabled === "true" ? "bg-primary" : "bg-border"
                 }`}
-              />
-            </button>
-            <span className="text-sm">
-              {form.deals_enabled === "true" ? "Enabled" : "Disabled"}
-            </span>
-          </div>
-          <p className="text-xs text-muted mt-2">
-            When enabled, AniArchive will search for cheap Blu-ray copies of
-            your synced titles on eBay, Amazon, and CeX.
-          </p>
-        </Field>
+              >
+                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                  form.deals_enabled === "true" ? "translate-x-5" : "translate-x-0.5"
+                }`} />
+              </button>
+            </div>
+          </Row>
 
-        {form.deals_enabled === "true" && (
-          <>
-            <Field label="Maximum Price (GBP)">
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={form.deals_max_price || "30"}
-                onChange={(e) => updateField("deals_max_price", e.target.value)}
-                className="w-32"
-              />
-            </Field>
-
-            <Field label="Deal Sources">
-              <div className="flex flex-wrap gap-2">
-                {["ebay", "amazon", "cex"].map((source) => {
-                  const selected = getArrayField("deals_sources").includes(source);
-                  return (
-                    <button
-                      key={source}
-                      onClick={() => toggleArrayField("deals_sources", source)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors ${
-                        selected
-                          ? "bg-secondary text-white"
-                          : "bg-surface-light text-muted hover:text-foreground"
-                      }`}
-                    >
-                      {source}
-                    </button>
-                  );
-                })}
-              </div>
-            </Field>
-          </>
-        )}
-      </Section>
+          {form.deals_enabled === "true" && (
+            <>
+              <Row label="Max Price (GBP)">
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.deals_max_price || "30"}
+                  onChange={(e) => updateField("deals_max_price", e.target.value)}
+                  className="w-24"
+                />
+              </Row>
+              <Row label="Sources">
+                <div className="flex flex-wrap gap-1.5">
+                  {["ebay", "amazon", "cex"].map((source) => {
+                    const selected = getArrayField("deals_sources").includes(source);
+                    return (
+                      <button
+                        key={source}
+                        onClick={() => toggleArrayField("deals_sources", source)}
+                        className={`px-3 py-1 rounded text-[13px] font-medium border capitalize transition-colors ${
+                          selected
+                            ? "bg-radarr/15 text-radarr border-radarr/40"
+                            : "bg-surface-light text-muted border-border hover:text-foreground"
+                        }`}
+                      >
+                        {source}
+                      </button>
+                    );
+                  })}
+                </div>
+              </Row>
+            </>
+          )}
+        </Section>
+      </div>
     </div>
   );
 }
 
 function Section({
   title,
+  accent,
   children,
 }: {
   title: string;
+  accent?: string;
   children: React.ReactNode;
 }) {
+  const accentColor = accent === "sonarr" ? "border-l-sonarr" : accent === "radarr" ? "border-l-radarr" : "border-l-primary";
   return (
-    <div className="bg-surface rounded-xl border border-border p-6 mb-6">
-      <h2 className="text-lg font-semibold mb-5">{title}</h2>
-      <div className="space-y-5">{children}</div>
+    <div className={`bg-surface rounded border border-border border-l-4 ${accentColor} mb-5`}>
+      <div className="px-5 py-3 border-b border-border">
+        <h2 className="text-sm font-semibold text-foreground-bright">{title}</h2>
+      </div>
+      <div className="divide-y divide-border">{children}</div>
     </div>
   );
 }
 
-function Field({
+function Row({
   label,
+  hint,
   children,
 }: {
   label: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <label className="block text-sm font-medium text-foreground mb-2">
-        {label}
-      </label>
-      {children}
+    <div className="px-5 py-3 flex items-start gap-6">
+      <div className="w-44 flex-shrink-0 pt-1.5">
+        <label className="text-sm font-medium text-foreground">{label}</label>
+        {hint && <p className="text-[11px] text-muted mt-0.5 leading-tight">{hint}</p>}
+      </div>
+      <div className="flex-1">{children}</div>
     </div>
   );
 }
