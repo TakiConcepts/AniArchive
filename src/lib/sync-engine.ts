@@ -255,7 +255,11 @@ export async function runSync(): Promise<SyncResult> {
 
     if (isMovie && hasRadarr) {
       try {
-        const movieData = await searchRadarrByTitle(radarrUrl!, radarrKey!, title);
+        let movieData = await searchRadarrByTitle(radarrUrl!, radarrKey!, title);
+
+        if (!movieData && syncedTitle.titleEnglish && syncedTitle.title !== syncedTitle.titleEnglish) {
+          movieData = await searchRadarrByTitle(radarrUrl!, radarrKey!, syncedTitle.title);
+        }
 
         if (!movieData) {
           await prisma.syncedTitle.update({
@@ -312,6 +316,10 @@ export async function runSync(): Promise<SyncResult> {
       try {
         let seriesData = await searchSonarrByTitle(sonarrUrl!, sonarrKey!, title);
 
+        if (!seriesData && syncedTitle.titleEnglish && syncedTitle.title !== syncedTitle.titleEnglish) {
+          seriesData = await searchSonarrByTitle(sonarrUrl!, sonarrKey!, syncedTitle.title);
+        }
+
         if (!seriesData && syncedTitle.tvdbId) {
           seriesData = await lookupSonarrSeries(sonarrUrl!, sonarrKey!, syncedTitle.tvdbId);
         }
@@ -367,6 +375,10 @@ export async function runSync(): Promise<SyncResult> {
         result.failed++;
         result.errors.push(`${title}: ${msg}`);
       }
+    } else if (isMovie && !hasRadarr) {
+      result.skipped++;
+    } else if (!isMovie && !hasSonarr) {
+      result.skipped++;
     }
   }
 
