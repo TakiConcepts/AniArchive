@@ -6,11 +6,15 @@ import {
   searchSonarrByTitle,
   addSonarrSeries,
   getSonarrExistingSeries,
+  getSonarrProfiles,
+  getSonarrRootFolders,
 } from "./sonarr";
 import {
   searchRadarrByTitle,
   addRadarrMovie,
   getRadarrExistingMovies,
+  getRadarrProfiles,
+  getRadarrRootFolders,
 } from "./radarr";
 import { getJellyfinMatchedIds } from "./jellyfin";
 import type { AniListEntry, SyncResult } from "@/types";
@@ -99,10 +103,10 @@ export async function runSync(): Promise<SyncResult> {
   const sonarrKey = await getSetting(SETTING_KEYS.SONARR_API_KEY);
   const radarrUrl = await getSetting(SETTING_KEYS.RADARR_URL);
   const radarrKey = await getSetting(SETTING_KEYS.RADARR_API_KEY);
-  const sonarrRoot = await getSetting(SETTING_KEYS.SONARR_ROOT_FOLDER);
-  const radarrRoot = await getSetting(SETTING_KEYS.RADARR_ROOT_FOLDER);
-  const sonarrProfileId = await getSetting(SETTING_KEYS.SONARR_QUALITY_PROFILE);
-  const radarrProfileId = await getSetting(SETTING_KEYS.RADARR_QUALITY_PROFILE);
+  let sonarrRoot = await getSetting(SETTING_KEYS.SONARR_ROOT_FOLDER);
+  let radarrRoot = await getSetting(SETTING_KEYS.RADARR_ROOT_FOLDER);
+  let sonarrProfileId = await getSetting(SETTING_KEYS.SONARR_QUALITY_PROFILE);
+  let radarrProfileId = await getSetting(SETTING_KEYS.RADARR_QUALITY_PROFILE);
   const sonarrProfileHighId = await getSetting(SETTING_KEYS.SONARR_QUALITY_PROFILE_HIGH);
   const radarrProfileHighId = await getSetting(SETTING_KEYS.RADARR_QUALITY_PROFILE_HIGH);
   const qualityThreshold = parseFloat((await getSetting(SETTING_KEYS.QUALITY_SCORE_THRESHOLD)) || "0");
@@ -111,10 +115,53 @@ export async function runSync(): Promise<SyncResult> {
   const jellyfinKey = await getSetting(SETTING_KEYS.JELLYFIN_API_KEY);
   const hasJellyfin = !!(jellyfinUrl && jellyfinKey);
 
+  if (sonarrUrl && sonarrKey) {
+    if (!sonarrRoot) {
+      try {
+        const rootFolders = await getSonarrRootFolders(sonarrUrl, sonarrKey);
+        if (rootFolders.length > 0) {
+          sonarrRoot = rootFolders[0].path;
+          await setSetting(SETTING_KEYS.SONARR_ROOT_FOLDER, sonarrRoot);
+        }
+      } catch { /* ignore */ }
+    }
+    if (!sonarrProfileId) {
+      try {
+        const profiles = await getSonarrProfiles(sonarrUrl, sonarrKey);
+        if (profiles.length > 0) {
+          sonarrProfileId = String(profiles[0].id);
+          await setSetting(SETTING_KEYS.SONARR_QUALITY_PROFILE, sonarrProfileId);
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
+  if (radarrUrl && radarrKey) {
+    if (!radarrRoot) {
+      try {
+        const rootFolders = await getRadarrRootFolders(radarrUrl, radarrKey);
+        if (rootFolders.length > 0) {
+          radarrRoot = rootFolders[0].path;
+          await setSetting(SETTING_KEYS.RADARR_ROOT_FOLDER, radarrRoot);
+        }
+      } catch { /* ignore */ }
+    }
+    if (!radarrProfileId) {
+      try {
+        const profiles = await getRadarrProfiles(radarrUrl, radarrKey);
+        if (profiles.length > 0) {
+          radarrProfileId = String(profiles[0].id);
+          await setSetting(SETTING_KEYS.RADARR_QUALITY_PROFILE, radarrProfileId);
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
   const hasSonarr = !!(sonarrUrl && sonarrKey && sonarrRoot && sonarrProfileId);
   const hasRadarr = !!(radarrUrl && radarrKey && radarrRoot && radarrProfileId);
 
-  await log("SYNC_RUN", null, "SUCCESS", "Sync started");
+  await log("SYNC_RUN", null, "SUCCESS",
+    `Sync started (Sonarr: ${hasSonarr ? "connected" : "not configured"}, Radarr: ${hasRadarr ? "connected" : "not configured"})`);
 
   // Step 1: Import from AniList
   const { imported } = await importFromAniList();

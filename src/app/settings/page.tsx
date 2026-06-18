@@ -44,6 +44,53 @@ export default function SettingsPage() {
     if (!isLoading && settings && !initialized.current) {
       setForm(settings);
       initialized.current = true;
+
+      if (settings.sonarr_url && settings.sonarr_api_key) {
+        fetch("/api/sonarr", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: settings.sonarr_url, apiKey: settings.sonarr_api_key }),
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.connected) {
+              setSonarrTest("ok");
+              if (data.profiles) setSonarrProfiles(data.profiles);
+              if (data.folders) setSonarrFolders(data.folders);
+            }
+          })
+          .catch(() => {});
+      }
+
+      if (settings.radarr_url && settings.radarr_api_key) {
+        fetch("/api/radarr", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: settings.radarr_url, apiKey: settings.radarr_api_key }),
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.connected) {
+              setRadarrTest("ok");
+              if (data.profiles) setRadarrProfiles(data.profiles);
+              if (data.folders) setRadarrFolders(data.folders);
+            }
+          })
+          .catch(() => {});
+      }
+
+      if (settings.jellyfin_url && settings.jellyfin_api_key) {
+        fetch("/api/jellyfin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: settings.jellyfin_url, apiKey: settings.jellyfin_api_key }),
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.connected) setJellyfinTest("ok");
+          })
+          .catch(() => {});
+      }
     }
   }, [isLoading, settings]);
 
