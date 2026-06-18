@@ -7,25 +7,26 @@ export async function GET(req: Request) {
   const format = searchParams.get("format");
   const syncStatus = searchParams.get("syncStatus");
   const search = searchParams.get("search");
-  const sort = searchParams.get("sort") || "updatedAt";
-  const order = searchParams.get("order") || "desc";
 
   const where: Record<string, unknown> = {};
 
   if (status) where.anilistStatus = status;
   if (format) where.format = format;
   if (syncStatus) where.syncStatus = syncStatus;
-  if (search) {
-    where.OR = [
-      { title: { contains: search } },
-      { titleEnglish: { contains: search } },
-    ];
-  }
 
-  const titles = await prisma.syncedTitle.findMany({
+  let titles = await prisma.syncedTitle.findMany({
     where,
-    orderBy: { [sort]: order },
+    orderBy: { updatedAt: "desc" },
   });
+
+  if (search) {
+    const term = search.toLowerCase();
+    titles = titles.filter(
+      (t) =>
+        t.title.toLowerCase().includes(term) ||
+        (t.titleEnglish && t.titleEnglish.toLowerCase().includes(term))
+    );
+  }
 
   return NextResponse.json({ titles });
 }
