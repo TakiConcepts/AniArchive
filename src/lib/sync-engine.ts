@@ -64,25 +64,29 @@ export async function importFromAniList(): Promise<{ imported: number; total: nu
         select: { syncStatus: true },
       });
 
+      const updateData: Record<string, unknown> = {
+        title: media.title.romaji,
+        titleEnglish: media.title.english || null,
+        coverImage: media.coverImage.large,
+        anilistStatus: entry.status,
+        userScore: entry.score || null,
+        averageScore: media.averageScore ? media.averageScore / 10 : null,
+        format: media.format || null,
+      };
+      if (existing?.syncStatus === "SKIPPED") {
+        updateData.syncStatus = "PENDING";
+      }
+
       await prisma.syncedTitle.upsert({
         where: { anilistId: media.id },
-        update: {
-          title: media.title.romaji,
-          titleEnglish: media.title.english,
-          coverImage: media.coverImage.large,
-          anilistStatus: entry.status,
-          userScore: entry.score || null,
-          averageScore: media.averageScore ? media.averageScore / 10 : null,
-          format: media.format,
-          ...(existing?.syncStatus === "SKIPPED" ? { syncStatus: "PENDING" } : {}),
-        },
+        update: updateData,
         create: {
           anilistId: media.id,
           title: media.title.romaji,
-          titleEnglish: media.title.english,
+          titleEnglish: media.title.english || null,
           coverImage: media.coverImage.large,
           mediaType: media.type,
-          format: media.format,
+          format: media.format || null,
           anilistStatus: entry.status,
           userScore: entry.score || null,
           averageScore: media.averageScore ? media.averageScore / 10 : null,
@@ -94,12 +98,15 @@ export async function importFromAniList(): Promise<{ imported: number; total: nu
     }
   }
 
-  if (matchedAnilistIds.length > 0) {
-    await prisma.syncedTitle.updateMany({
-      where: {
-        anilistId: { notIn: matchedAnilistIds },
-        syncStatus: "PENDING",
-      },
+  const matchedIdSet = new Set(matchedAnilistIds);
+  const allPending = await prisma.syncedTitle.findMany({
+    where: { syncStatus: "PENDING" },
+    select: { id: true, anilistId: true },
+  });
+  const toSkip = allPending.filter((t) => !matchedIdSet.has(t.anilistId));
+  for (const t of toSkip) {
+    await prisma.syncedTitle.update({
+      where: { id: t.id },
       data: { syncStatus: "SKIPPED" },
     });
   }
