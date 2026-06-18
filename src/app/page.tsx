@@ -10,12 +10,15 @@ import {
   Activity,
   Disc3,
   ArrowRight,
+  Download,
+  Library,
 } from "lucide-react";
 import Link from "next/link";
 
 export default function Dashboard() {
   const { syncStatus, isLoading, mutate } = useSyncStatus();
   const [syncing, setSyncing] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   async function handleSync() {
     setSyncing(true);
@@ -33,6 +36,28 @@ export default function Dashboard() {
     }
   }
 
+  async function handleImport() {
+    setImporting(true);
+    try {
+      const res = await fetch("/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "import" }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(`Import failed: ${data.error}`);
+      } else {
+        alert(`Imported ${data.imported} titles from AniList`);
+      }
+      mutate();
+    } catch {
+      alert("Import request failed");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   const lastSyncFormatted = syncStatus?.lastSync
     ? new Date(syncStatus.lastSync).toLocaleString()
     : "Never";
@@ -42,19 +67,36 @@ export default function Dashboard() {
       {/* Page toolbar */}
       <div className="bg-surface border-b border-border px-6 py-3 flex items-center justify-between">
         <h1 className="text-base font-semibold text-foreground-bright">Dashboard</h1>
-        <button
-          onClick={handleSync}
-          disabled={syncing}
-          className="flex items-center gap-2 px-4 py-1.5 bg-primary hover:bg-primary-hover text-white rounded text-[13px] font-medium transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-          {syncing ? "Syncing..." : "Sync Now"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleImport}
+            disabled={importing || syncing}
+            className="flex items-center gap-2 px-4 py-1.5 bg-surface-light hover:bg-surface-hover border border-border text-foreground rounded text-[13px] font-medium transition-colors disabled:opacity-50"
+          >
+            <Download className={`w-3.5 h-3.5 ${importing ? "animate-bounce" : ""}`} />
+            {importing ? "Importing..." : "Import AniList"}
+          </button>
+          <button
+            onClick={handleSync}
+            disabled={syncing || importing}
+            className="flex items-center gap-2 px-4 py-1.5 bg-primary hover:bg-primary-hover text-white rounded text-[13px] font-medium transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Syncing..." : "Sync Now"}
+          </button>
+        </div>
       </div>
 
       <div className="p-6">
         {/* Stats row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <StatCard
+            label="Total Titles"
+            value={syncStatus?.totalTitles ?? 0}
+            icon={<Library className="w-8 h-8" />}
+            color="text-primary"
+            iconBg="bg-primary/10"
+          />
           <StatCard
             label="Synced"
             value={syncStatus?.totalSynced ?? 0}

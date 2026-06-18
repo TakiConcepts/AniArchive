@@ -8,6 +8,7 @@ interface SyncStatus {
   totalSynced: number;
   totalPending: number;
   totalFailed: number;
+  totalTitles: number;
   recentLogs: {
     id: number;
     action: string;
