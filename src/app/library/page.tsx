@@ -157,9 +157,13 @@ export default function LibraryPage() {
                       <span className="text-xs">{STATUS_LABELS[title.anilistStatus] || title.anilistStatus}</span>
                     </td>
                     <td>
-                      <span className="text-sm font-mono">
-                        {title.userScore ? title.userScore.toFixed(1) : title.averageScore ? title.averageScore.toFixed(1) : "—"}
-                      </span>
+                      {title.userScore || title.averageScore ? (
+                        <span className="text-sm font-mono">
+                          {(title.userScore || title.averageScore)!.toFixed(1)}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted">no rating</span>
+                      )}
                     </td>
                     <td>
                       <SyncBadge status={title.syncStatus} />
@@ -266,9 +270,13 @@ function PosterCard({
               {title.format}
             </span>
           )}
-          {score && (
+          {score ? (
             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm bg-primary/90 text-white">
               {score.toFixed(1)}
+            </span>
+          ) : (
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-sm bg-black/60 text-muted backdrop-blur-sm">
+              no rating
             </span>
           )}
         </div>

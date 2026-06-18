@@ -28,5 +28,14 @@ export async function GET(req: Request) {
     );
   }
 
+  titles.sort((a, b) => {
+    const scoreA = a.userScore || a.averageScore;
+    const scoreB = b.userScore || b.averageScore;
+    if (scoreA && !scoreB) return -1;
+    if (!scoreA && scoreB) return 1;
+    if (scoreA && scoreB) return scoreB - scoreA;
+    return 0;
+  });
+
   return NextResponse.json({ titles });
 }
