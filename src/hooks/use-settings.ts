@@ -4,7 +4,10 @@ import useSWR from "swr";
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export function useSettings() {
-  const { data, error, isLoading, mutate } = useSWR<Record<string, string>>("/api/settings", fetcher);
+  const { data, error, isLoading, mutate } = useSWR<Record<string, string>>("/api/settings", fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  });
 
   async function updateSettings(updates: Record<string, string>) {
     await fetch("/api/settings", {

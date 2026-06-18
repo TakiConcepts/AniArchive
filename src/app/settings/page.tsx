@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import {
   Settings as SettingsIcon,
@@ -39,10 +39,12 @@ export default function SettingsPage() {
   const [sonarrFolders, setSonarrFolders] = useState<{ path: string }[]>([]);
   const [radarrProfiles, setRadarrProfiles] = useState<{ id: number; name: string }[]>([]);
   const [radarrFolders, setRadarrFolders] = useState<{ path: string }[]>([]);
+  const initialized = useRef(false);
 
   useEffect(() => {
-    if (!isLoading && settings) {
+    if (!isLoading && settings && !initialized.current) {
       setForm(settings);
+      initialized.current = true;
     }
   }, [isLoading, settings]);
 
