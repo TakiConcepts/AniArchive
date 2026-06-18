@@ -64,35 +64,36 @@ export async function importFromAniList(): Promise<{ imported: number; total: nu
         select: { syncStatus: true },
       });
 
-      const updateData: Record<string, unknown> = {
-        title: media.title.romaji,
-        titleEnglish: media.title.english || null,
-        coverImage: media.coverImage.large,
-        anilistStatus: entry.status,
-        userScore: entry.score || null,
-        averageScore: media.averageScore ? media.averageScore / 10 : null,
-        format: media.format || null,
-      };
-      if (existing?.syncStatus === "SKIPPED") {
-        updateData.syncStatus = "PENDING";
+      if (existing) {
+        await prisma.syncedTitle.update({
+          where: { anilistId: media.id },
+          data: {
+            title: media.title.romaji,
+            titleEnglish: media.title.english || null,
+            coverImage: media.coverImage.large,
+            anilistStatus: entry.status,
+            userScore: entry.score || null,
+            averageScore: media.averageScore ? media.averageScore / 10 : null,
+            format: media.format || null,
+            syncStatus: existing.syncStatus === "SKIPPED" ? "PENDING" : existing.syncStatus,
+          },
+        });
+      } else {
+        await prisma.syncedTitle.create({
+          data: {
+            anilistId: media.id,
+            title: media.title.romaji,
+            titleEnglish: media.title.english || null,
+            coverImage: media.coverImage.large,
+            mediaType: media.type,
+            format: media.format || null,
+            anilistStatus: entry.status,
+            userScore: entry.score || null,
+            averageScore: media.averageScore ? media.averageScore / 10 : null,
+            syncStatus: "PENDING",
+          },
+        });
       }
-
-      await prisma.syncedTitle.upsert({
-        where: { anilistId: media.id },
-        update: updateData,
-        create: {
-          anilistId: media.id,
-          title: media.title.romaji,
-          titleEnglish: media.title.english || null,
-          coverImage: media.coverImage.large,
-          mediaType: media.type,
-          format: media.format || null,
-          anilistStatus: entry.status,
-          userScore: entry.score || null,
-          averageScore: media.averageScore ? media.averageScore / 10 : null,
-          syncStatus: "PENDING",
-        },
-      });
 
       imported++;
     }
