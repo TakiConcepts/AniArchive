@@ -1,0 +1,31 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get("status");
+  const format = searchParams.get("format");
+  const syncStatus = searchParams.get("syncStatus");
+  const search = searchParams.get("search");
+  const sort = searchParams.get("sort") || "updatedAt";
+  const order = searchParams.get("order") || "desc";
+
+  const where: Record<string, unknown> = {};
+
+  if (status) where.anilistStatus = status;
+  if (format) where.format = format;
+  if (syncStatus) where.syncStatus = syncStatus;
+  if (search) {
+    where.OR = [
+      { title: { contains: search } },
+      { titleEnglish: { contains: search } },
+    ];
+  }
+
+  const titles = await prisma.syncedTitle.findMany({
+    where,
+    orderBy: { [sort]: order },
+  });
+
+  return NextResponse.json({ titles });
+}

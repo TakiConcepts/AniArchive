@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model SyncedTitle {
+  id              Int       @id @default(autoincrement())
+  anilistId       Int       @unique
+  title           String
+  titleEnglish    String?
+  coverImage      String?
+  mediaType       String
+  format          String?
+  anilistStatus   String
+  userScore       Float?
+  averageScore    Float?
+  sonarrId        Int?
+  radarrId        Int?
+  tvdbId          Int?
+  tmdbId          Int?
+  syncStatus      String    @default("PENDING")
+  qualityProfile  String?
+  failReason      String?
+  syncedAt        DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model BlurayDeal {
+  id        Int      @id @default(autoincrement())
+  anilistId Int?
+  title     String
+  price     Float
+  currency  String   @default("GBP")
+  source    String
+  url       String?
+  condition String
+  notified  Boolean  @default(false)
+  foundAt   DateTime @default(now())
+}
+
+model SyncLog {
+  id        Int      @id @default(autoincrement())
+  action    String
+  titleId   Int?
+  title     String?
+  status    String
+  details   String?
+  createdAt DateTime @default(now())
+}
