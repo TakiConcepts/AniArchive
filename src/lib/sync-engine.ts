@@ -44,6 +44,7 @@ export async function importFromAniList(): Promise<{ imported: number; total: nu
 
   let imported = 0;
   let total = 0;
+  const matchedAnilistIds: number[] = [];
 
   for (const list of lists) {
     for (const entry of list.entries) {
@@ -56,6 +57,12 @@ export async function importFromAniList(): Promise<{ imported: number; total: nu
       if (minRating > 0 && score < minRating) continue;
 
       const { media } = entry;
+      matchedAnilistIds.push(media.id);
+
+      const existing = await prisma.syncedTitle.findUnique({
+        where: { anilistId: media.id },
+        select: { syncStatus: true },
+      });
 
       await prisma.syncedTitle.upsert({
         where: { anilistId: media.id },
@@ -67,6 +74,7 @@ export async function importFromAniList(): Promise<{ imported: number; total: nu
           userScore: entry.score || null,
           averageScore: media.averageScore ? media.averageScore / 10 : null,
           format: media.format,
+          ...(existing?.syncStatus === "SKIPPED" ? { syncStatus: "PENDING" } : {}),
         },
         create: {
           anilistId: media.id,
@@ -84,6 +92,16 @@ export async function importFromAniList(): Promise<{ imported: number; total: nu
 
       imported++;
     }
+  }
+
+  if (matchedAnilistIds.length > 0) {
+    await prisma.syncedTitle.updateMany({
+      where: {
+        anilistId: { notIn: matchedAnilistIds },
+        syncStatus: "PENDING",
+      },
+      data: { syncStatus: "SKIPPED" },
+    });
   }
 
   await log("ANILIST_FETCH", null, "SUCCESS", `Imported ${imported}/${total} titles from AniList`);
