@@ -33,6 +33,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [sonarrTest, setSonarrTest] = useState<"idle" | "testing" | "ok" | "fail">("idle");
   const [radarrTest, setRadarrTest] = useState<"idle" | "testing" | "ok" | "fail">("idle");
+  const [jellyfinTest, setJellyfinTest] = useState<"idle" | "testing" | "ok" | "fail">("idle");
   const [sonarrProfiles, setSonarrProfiles] = useState<{ id: number; name: string }[]>([]);
   const [sonarrFolders, setSonarrFolders] = useState<{ path: string }[]>([]);
   const [radarrProfiles, setRadarrProfiles] = useState<{ id: number; name: string }[]>([]);
@@ -113,6 +114,21 @@ export default function SettingsPage() {
       }
     } catch {
       setRadarrTest("fail");
+    }
+  }
+
+  async function testJellyfin() {
+    setJellyfinTest("testing");
+    try {
+      const res = await fetch("/api/jellyfin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: form.jellyfin_url, apiKey: form.jellyfin_api_key }),
+      });
+      const data = await res.json();
+      setJellyfinTest(data.connected ? "ok" : "fail");
+    } catch {
+      setJellyfinTest("fail");
     }
   }
 
@@ -276,6 +292,40 @@ export default function SettingsPage() {
               </select>
             </Row>
           )}
+        </Section>
+
+        {/* Jellyfin */}
+        <Section title="Jellyfin" accent="jellyfin">
+          <Row label="Host" hint="URL including port">
+            <input
+              type="text"
+              value={form.jellyfin_url || ""}
+              onChange={(e) => updateField("jellyfin_url", e.target.value)}
+              placeholder="http://localhost:8096"
+              className="w-72"
+            />
+          </Row>
+          <Row label="API Key">
+            <div className="flex items-center gap-2">
+              <input
+                type="password"
+                value={form.jellyfin_api_key || ""}
+                onChange={(e) => updateField("jellyfin_api_key", e.target.value)}
+                placeholder="API Key"
+                className="w-72"
+              />
+              <button
+                onClick={testJellyfin}
+                disabled={jellyfinTest === "testing"}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-light hover:bg-surface-hover border border-border text-foreground rounded text-[13px] transition-colors h-[35px]"
+              >
+                {jellyfinTest === "testing" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Test
+              </button>
+              {jellyfinTest === "ok" && <CheckCircle2 className="w-4 h-4 text-success" />}
+              {jellyfinTest === "fail" && <XCircle className="w-4 h-4 text-danger" />}
+            </div>
+          </Row>
         </Section>
 
         {/* Sync Rules */}
@@ -459,7 +509,7 @@ function Section({
   accent?: string;
   children: React.ReactNode;
 }) {
-  const accentColor = accent === "sonarr" ? "border-l-sonarr" : accent === "radarr" ? "border-l-radarr" : "border-l-primary";
+  const accentColor = accent === "sonarr" ? "border-l-sonarr" : accent === "radarr" ? "border-l-radarr" : accent === "jellyfin" ? "border-l-purple-500" : "border-l-primary";
   return (
     <div className={`bg-surface rounded border border-border border-l-4 ${accentColor} mb-5`}>
       <div className="px-5 py-3 border-b border-border">

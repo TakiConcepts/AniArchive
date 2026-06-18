@@ -138,6 +138,7 @@ export default function LibraryPage() {
                   <th>Status</th>
                   <th>Score</th>
                   <th>Sync</th>
+                  <th>Jellyfin</th>
                   <th></th>
                 </tr>
               </thead>
@@ -162,6 +163,13 @@ export default function LibraryPage() {
                     </td>
                     <td>
                       <SyncBadge status={title.syncStatus} />
+                    </td>
+                    <td>
+                      {title.inJellyfin && (
+                        <span className="inline-block text-[11px] font-medium px-2 py-0.5 rounded border bg-purple-500/15 text-purple-400 border-purple-500/30">
+                          IN LIBRARY
+                        </span>
+                      )}
                     </td>
                     <td>
                       <a
@@ -214,6 +222,7 @@ function PosterCard({
     syncStatus: string;
     qualityProfile: string | null;
     failReason: string | null;
+    inJellyfin: boolean;
   };
 }) {
   const displayTitle = title.titleEnglish || title.title;
@@ -243,6 +252,12 @@ function PosterCard({
 
         {/* Sync status indicator bar at bottom */}
         <div className={`absolute bottom-0 left-0 right-0 h-[3px] ${SYNC_STYLES[title.syncStatus] || "bg-muted"}`} />
+
+        {title.inJellyfin && (
+          <span className="absolute bottom-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-sm bg-purple-500/90 text-white">
+            IN JELLYFIN
+          </span>
+        )}
 
         {/* Top-left badges */}
         <div className="absolute top-0 left-0 right-0 p-1.5 flex justify-between">

@@ -31,6 +31,7 @@ model SyncedTitle {
   syncStatus      String    @default("PENDING")
   qualityProfile  String?
   failReason      String?
+  inJellyfin      Boolean   @default(false)
   syncedAt        DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

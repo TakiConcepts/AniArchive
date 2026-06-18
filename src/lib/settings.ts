@@ -53,6 +53,8 @@ export const SETTING_KEYS = {
   RADARR_API_KEY: "radarr_api_key",
   RADARR_ROOT_FOLDER: "radarr_root_folder",
   RADARR_QUALITY_PROFILE: "radarr_quality_profile_id",
+  JELLYFIN_URL: "jellyfin_url",
+  JELLYFIN_API_KEY: "jellyfin_api_key",
   ANILIST_USERNAME: "anilist_username",
   SYNC_ENABLED: "sync_enabled",
   SYNC_INTERVAL_MINUTES: "sync_interval_minutes",

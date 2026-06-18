@@ -17,6 +17,7 @@ interface SyncedTitle {
   syncStatus: string;
   qualityProfile: string | null;
   failReason: string | null;
+  inJellyfin: boolean;
   syncedAt: string | null;
   createdAt: string;
   updatedAt: string;

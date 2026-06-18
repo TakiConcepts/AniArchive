@@ -12,6 +12,7 @@ import {
   addRadarrMovie,
   getRadarrExistingMovies,
 } from "./radarr";
+import { getJellyfinMatchedIds } from "./jellyfin";
 import type { AniListEntry, SyncResult } from "@/types";
 
 async function log(action: string, title: string | null, status: string, details?: string) {
@@ -103,6 +104,10 @@ export async function runSync(): Promise<SyncResult> {
   const sonarrProfileId = await getSetting(SETTING_KEYS.SONARR_QUALITY_PROFILE);
   const radarrProfileId = await getSetting(SETTING_KEYS.RADARR_QUALITY_PROFILE);
 
+  const jellyfinUrl = await getSetting(SETTING_KEYS.JELLYFIN_URL);
+  const jellyfinKey = await getSetting(SETTING_KEYS.JELLYFIN_API_KEY);
+  const hasJellyfin = !!(jellyfinUrl && jellyfinKey);
+
   const hasSonarr = !!(sonarrUrl && sonarrKey && sonarrRoot && sonarrProfileId);
   const hasRadarr = !!(radarrUrl && radarrKey && radarrRoot && radarrProfileId);
 
@@ -134,6 +139,16 @@ export async function runSync(): Promise<SyncResult> {
     } catch { /* ignore */ }
   }
 
+  let jellyfinData: Awaited<ReturnType<typeof getJellyfinMatchedIds>> | null = null;
+  if (hasJellyfin) {
+    try {
+      jellyfinData = await getJellyfinMatchedIds(jellyfinUrl!, jellyfinKey!);
+      await log("JELLYFIN_CHECK", null, "SUCCESS", `Found ${jellyfinData.titles.size} items in Jellyfin`);
+    } catch {
+      await log("JELLYFIN_CHECK", null, "FAILED", "Could not connect to Jellyfin");
+    }
+  }
+
   const pendingTitles = await prisma.syncedTitle.findMany({
     where: { syncStatus: { in: ["PENDING", "FAILED"] } },
   });
@@ -141,6 +156,24 @@ export async function runSync(): Promise<SyncResult> {
   for (const syncedTitle of pendingTitles) {
     const title = syncedTitle.titleEnglish || syncedTitle.title;
     const isMovie = syncedTitle.format === "MOVIE";
+
+    if (jellyfinData) {
+      const inJellyfin =
+        jellyfinData.anilistIds.has(String(syncedTitle.anilistId)) ||
+        (syncedTitle.tvdbId ? jellyfinData.tvdbIds.has(String(syncedTitle.tvdbId)) : false) ||
+        (syncedTitle.tmdbId ? jellyfinData.tmdbIds.has(String(syncedTitle.tmdbId)) : false) ||
+        jellyfinData.titles.has(title.toLowerCase().trim());
+
+      if (inJellyfin) {
+        await prisma.syncedTitle.update({
+          where: { id: syncedTitle.id },
+          data: { syncStatus: "SYNCED", inJellyfin: true, syncedAt: new Date() },
+        });
+        await log("JELLYFIN_SKIP", title, "SKIPPED", "Already in Jellyfin");
+        result.skipped++;
+        continue;
+      }
+    }
 
     if (isMovie && hasRadarr) {
       try {
